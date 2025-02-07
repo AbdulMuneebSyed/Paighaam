@@ -14,7 +14,7 @@ export default function Verify() {
     // Simulate OTP verification
     console.log("Verifying OTP", otp)
     // Redirect to profile setup page
-    window.location.href = "/profile-setup"
+    window.location.href = "/verify-meta"
   }
 
   return (

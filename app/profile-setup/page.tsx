@@ -141,7 +141,7 @@ const handleSubmit = async (e: React.FormEvent) => {
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select a language" />
               </SelectTrigger>
-              <SelectContent className="h-48">
+              <SelectContent className="h-48 overflow-y-scroll">
                 {languages.map((lang) => (
                   <SelectItem key={lang} value={lang}>
                     {lang}

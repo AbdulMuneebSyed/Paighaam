@@ -30,7 +30,7 @@ export default function Home() {
       .single();
     if(data){
        localStorage.setItem("phone_number", formattedPhone);
-       router.push("/profile-setup");
+       router.push("/verify");
     }
     if (error && error.code !== "PGRST116") {
       console.error("Error checking user:", error);
@@ -49,7 +49,7 @@ export default function Home() {
         return;
       }
        localStorage.setItem("phone_number", formattedPhone);
-      router.push("/profile-setup");
+      router.push("/verify");
   };
 
   return (
