@@ -32,7 +32,7 @@ export default function Groups() {
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [groups, setGroups] = useState<Group[]>([]);
-  const [groupMessages, setGroupMessages] = useState<GroupMessage[]>([]);
+  const [groupMessages, setGroupMessages] = useState<GroupMessage[]>([])
   // Modal state for creating a new group:
   const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
   const [allUsers, setAllUsers] = useState<Array<{ id: string; name: string }>>(
@@ -68,70 +68,154 @@ export default function Groups() {
   }, []);
 
   // Fetch group messages when a group is selected.
-  useEffect(() => {
-    const fetchMessages = async () => {
-      if (!selectedGroup) return;
+  // Fetch group messages when a group is selected.
+useEffect(() => {
+  // If there's no group selected, skip
+  if (!selectedGroup) return;
 
-      const { data, error } = await supabase
-        .from("group_chats")
-        .select("*, sender:user_id (name)")
-        .eq("group_id", selectedGroup)
-        .order("timestamp", { ascending: true });
+  // Define the fetch function inside the effect
+  const fetchMessages = async () => {
+    const { data, error } = await supabase
+      .from("group_chats")
+      .select("*, sender:sender_id(name), language")
+      .eq("group_id", selectedGroup)
+      .order("timestamp", { ascending: true });
 
-      if (error) {
-        console.error("Error fetching messages:", error);
-        return;
-      }
+    if (error) {
+      console.error("Error fetching messages:", error);
+      return;
+    }
 
-      const formattedMessages = data?.map((msg: any) => ({
-        ...msg,
-        sender_name: msg.sender?.name,
-      })) as GroupMessage[];
+    const currentUserId = localStorage.getItem("user_id");
+    if (!currentUserId) return;
 
-      setGroupMessages(formattedMessages);
-    };
+    const { data: userData } = await supabase
+      .from("users")
+      .select("preferred_language")
+      .eq("id", currentUserId)
+      .single();
 
+    const receiverLanguage = userData?.preferred_language || "en";
+
+    const translatedMessages = await Promise.all(
+      data.map(async (msg) => {
+        const res = await fetch("/api/handleTranslate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: msg.message,
+            sender_language: msg.language,
+            receiver_language: receiverLanguage,
+          }),
+        });
+
+        const translatedData = await res.json();
+
+        return {
+          ...msg,
+          sender_name: msg.sender?.name,
+          translated_message: translatedData.translated_message,
+          roman_translated_message: translatedData.roman_translated_message,
+        };
+      })
+    );
+
+    setGroupMessages(translatedMessages);
+  };
+
+  // Debounce: Wait 500ms before fetching
+  const timer = setTimeout(() => {
     fetchMessages();
-  }, [selectedGroup]);
+  }, 500);
+
+  // Clear the timer if `selectedGroup` changes before 500ms
+  return () => {
+    clearTimeout(timer);
+  };
+}, [selectedGroup]);
+
+
 
   // Real-time updates for group messages.
-  useEffect(() => {
-    if (!selectedGroup) return;
+useEffect(() => {
+  if (!selectedGroup) return;
 
-    const channel = supabase
-      .channel("group_messages")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "group_chats",
-          filter: `group_id=eq.${selectedGroup}`,
-        },
-        (payload) => {
-          const newMessage = payload.new as GroupMessage;
-          supabase
-            .from("users")
-            .select("name")
-            .eq("id", newMessage.sender_id)
-            .single()
-            .then(({ data }) => {
-              setGroupMessages((prev) => [
-                ...prev,
-                {
-                  ...newMessage,
-                  sender_name: data?.name || "Unknown",
-                },
-              ]);
-            });
-        }
-      )
-      .subscribe();
+  const channel = supabase
+    .channel("group_messages")
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "group_chats",
+        filter: `group_id=eq.${selectedGroup}`,
+      },
+      async (payload) => {
+        const newMessage = payload.new as GroupMessage;
 
-    return () => {
-      channel.unsubscribe();
-    };
-  }, [selectedGroup]);
+        // Fetch sender's name
+        const { data: senderData } = await supabase
+          .from("users")
+          .select("name")
+          .eq("id", newMessage.sender_id)
+          .single();
+
+        const senderName = senderData?.name || "Unknown";
+
+        // Fetch receiver's language from localStorage (assuming it's stored under 'user_id')
+        const userId = localStorage.getItem("user_id");
+        const { data: receiverData } = await supabase
+          .from("users")
+          .select("preferred_language")
+          .eq("id", userId)
+          .single();
+
+        const receiverLanguage = receiverData?.preferred_language || "en";
+
+        // Translate the message
+        const response = await fetch("/api/handleTranslate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            message: newMessage.message,
+            sender_language: newMessage.language,
+            receiver_language: receiverLanguage,
+          }),
+        });
+
+        const translationData = await response.json();
+        const translatedMessage =
+          translationData.translated_message || newMessage.message;
+        console.log(`translated message: ${translatedMessage}`);
+        const romanTranslatedMessage =
+          translationData.roman_translated_message;
+
+        // 1) Update state for normal translation
+        setGroupMessages((prev) => [
+          ...prev,
+          {
+            ...newMessage,
+            sender_name: senderName,
+            translated_message: translatedMessage,
+            roman_translated_message: romanTranslatedMessage,
+          },
+        ]);
+        console.log("this is it +1 : ");
+        console.log(groupMessages);
+        // console.log("groupRomanMessages:", groupRomanMessages);
+      }
+    )
+    .subscribe();
+
+  return () => {
+    channel.unsubscribe();
+  };
+}, [ selectedGroup]);
+
+
+
 
   // Scroll to bottom on new messages.
   useEffect(() => {
@@ -148,7 +232,7 @@ export default function Groups() {
       .select("preferred_language")
       .eq("id", currentUserId.current)
       .single();
-
+    console.log(senderData);
     // Send to API endpoint.
     const res = await fetch("/api/handlegroupsend", {
       method: "POST",
@@ -160,7 +244,10 @@ export default function Groups() {
         language: senderData?.preferred_language || "en",
       }),
     });
-
+    if (!res.ok) {
+      console.error("Error sending message:", await res.text());
+      return;
+    }
     if (res.ok) setMessage("");
   };
 
@@ -168,6 +255,7 @@ export default function Groups() {
   useEffect(() => {
     async function fetchAllUsers() {
       const current = localStorage.getItem("user_id");
+      console.log("Current = " + current);
       if (!current) return;
 
       const { data, error } = await supabase.from("users").select("id, name");

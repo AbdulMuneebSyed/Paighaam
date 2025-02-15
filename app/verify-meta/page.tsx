@@ -1,14 +1,18 @@
 "use client";
 
+import useMetaMask from "@/components/hooks/metamask";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function MetaMaskVerificationPage() {
   const router = useRouter();
+  const { account, verified, connectWallet } = useMetaMask();
 
-  const handleConnect = () => {
-    // Route to the dummy verification URL
-    router.push("/verify-meta-mask-ajkl47813290-csadnl78913240");
-  };
+  useEffect(() => {
+    if (verified) {
+      router.push("/verify-meta-mask-ajkl47813290-csadnl78913240");
+    }
+  }, [verified, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
@@ -25,7 +29,7 @@ export default function MetaMaskVerificationPage() {
             Please connect your MetaMask wallet to verify your account.
           </p>
           <button
-            onClick={handleConnect}
+            onClick={connectWallet}
             className="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-4 rounded flex items-center space-x-2"
           >
             <img
@@ -35,6 +39,9 @@ export default function MetaMaskVerificationPage() {
             />
             <span>Connect to MetaMask</span>
           </button>
+          {account && (
+            <p className="mt-4 text-gray-700">Connected: {account}</p>
+          )}
         </div>
       </div>
     </div>

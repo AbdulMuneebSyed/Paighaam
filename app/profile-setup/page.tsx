@@ -141,7 +141,7 @@ const handleSubmit = async (e: React.FormEvent) => {
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select a language" />
               </SelectTrigger>
-              <SelectContent className="h-48 overflow-y-scroll">
+              <SelectContent className="h-48 bg-white rounded-lg shadow-lg overflow-y-auto">
                 {languages.map((lang) => (
                   <SelectItem key={lang} value={lang}>
                     {lang}
@@ -163,9 +163,14 @@ const handleSubmit = async (e: React.FormEvent) => {
               accept="image/*"
               onChange={(e) => setPhoto(e.target.files?.[0] || null)}
               className="w-full"
-              
             />
           </div>
+          <Label
+            htmlFor="name"
+            className="mb-2 block text-sm font-medium text-gray-700"
+          >
+            Your Wallet : {localStorage.getItem("wallet")}
+          </Label>
           <Button type="submit" className="w-full">
             Complete Profile
           </Button>

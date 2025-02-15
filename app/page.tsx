@@ -22,10 +22,9 @@ export default function Home() {
       return;
     }
 
-    // Check if the number exists in the DB
     const { data, error } = await supabase
       .from("users")
-      .select("id") // Selecting just the id to keep it lightweight
+      .select("id") 
       .eq("phone_number", formattedPhone)
       .single();
     if(data){
@@ -37,15 +36,13 @@ export default function Home() {
       alert("Something went wrong. Please try again.");
       return;
     }
-
-      // If new user, insert into DB and go to profile setup
       const { error: insertError } = await supabase
         .from("users")
         .insert([{ phone_number: formattedPhone }]);
 
       if (insertError) {
         console.error("Error inserting user:", insertError);
-        alert("Could not create an account. Try again.");
+        ("Could not create an account. Try again.");
         return;
       }
        localStorage.setItem("phone_number", formattedPhone);
@@ -61,7 +58,7 @@ export default function Home() {
     >
       <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-lg">
         <h1 className="mb-6 text-center text-2xl font-bold text-gray-800">
-          Welcome to Paighaam
+          Welcome to Word-Bridge
         </h1>
         <p className="mb-6 text-center text-sm text-gray-600">
           Connect with friends and family through instant messaging
@@ -77,7 +74,7 @@ export default function Home() {
             <Input
               type="tel"
               id="phoneNumber"
-              placeholder="+1234567890"
+              placeholder="+91-XXXX-XXXXXX"
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
               className="w-full"
