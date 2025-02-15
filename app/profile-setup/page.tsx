@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,59 +47,62 @@ export default function ProfileSetup() {
   const [name, setName] = useState("");
   const [language, setLanguage] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
+  const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
+  const [wallet, setWallet] = useState<string | null>(null);
   const router = useRouter(); // Using useRouter
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+  // Fetch localStorage data on client-side
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setPhoneNumber(localStorage.getItem("phone_number"));
+      setWallet(localStorage.getItem("wallet"));
+    }
+  }, []);
 
-  // Fetch the phone number from localStorage
-  const phoneNumber = localStorage.getItem("phone_number");
-  if (!phoneNumber) {
-    alert("Phone number is missing in localStorage!");
-    return;
-  }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  // Upload the photo to Supabase Storage
-  let photoUrl = "";
-  if (photo) {
-    const { data, error: uploadError } = await supabase.storage
-      .from("profile-pic")
-      .upload(`public/${Date.now()}_${photo.name}`, photo);
-
-    if (uploadError) {
-      alert("Error uploading photo: " + uploadError.message);
+    if (!phoneNumber) {
+      alert("Phone number is missing in localStorage!");
       return;
     }
-    photoUrl = data?.path || "";
-  }
 
-  // Insert the user details into the users table (or update if necessary)
-  const { data: userData, error } = await supabase
-    .from("users")
-    .update({
-      name,
-      preferred_language: language,
-      profile_pic: photoUrl,
-    })
-    .eq("phone_number", phoneNumber)
-    .select("id"); // Fetch the user's id after update
+    let photoUrl = "";
+    if (photo) {
+      const { data, error: uploadError } = await supabase.storage
+        .from("profile-pic")
+        .upload(`public/${Date.now()}_${photo.name}`, photo);
 
-  if (error) {
-    alert("Error setting up profile: " + error.message);
-    console.log(error);
-    return;
-  }
+      if (uploadError) {
+        alert("Error uploading photo: " + uploadError.message);
+        return;
+      }
+      photoUrl = data?.path || "";
+    }
 
-  // Store the user's id in localStorage
-  const userId = userData?.[0]?.id;
-  if (userId) {
-    localStorage.setItem("user_id", userId);
-  }
-  console.log(userId)
-  // Use router.push to navigate to the dashboard
-  router.push("/dashboard/chats"); // Redirects to the dashboard page
-};
+    const { data: userData, error } = await supabase
+      .from("users")
+      .update({
+        name,
+        preferred_language: language,
+        profile_pic: photoUrl,
+      })
+      .eq("phone_number", phoneNumber)
+      .select("id");
 
+    if (error) {
+      alert("Error setting up profile: " + error.message);
+      console.error(error);
+      return;
+    }
+
+    const userId = userData?.[0]?.id;
+    if (userId) {
+      localStorage.setItem("user_id", userId);
+    }
+    console.log(userId);
+    router.push("/dashboard/chats");
+  };
 
   return (
     <motion.div
@@ -166,10 +169,10 @@ const handleSubmit = async (e: React.FormEvent) => {
             />
           </div>
           <Label
-            htmlFor="name"
+            htmlFor="wallet"
             className="mb-2 block text-sm font-medium text-gray-700"
           >
-            Your Wallet : {localStorage.getItem("wallet")}
+            Your Wallet: {wallet || "Not Available"}
           </Label>
           <Button type="submit" className="w-full">
             Complete Profile
