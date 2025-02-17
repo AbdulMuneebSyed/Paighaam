@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
 import { ethers } from "ethers";
+import { useRouter } from "next/navigation";
+// import {  useRouter } from "next/Navigation";
 
 export default function useMetaMask() {
     const [account, setAccount] = useState(null);
     const [verified, setVerified] = useState(false);
+    const router = useRouter();
     useEffect(() => {
         if (window.ethereum) {
             window.ethereum.on("accountsChanged", (accounts) => {
@@ -25,7 +28,8 @@ export default function useMetaMask() {
             }
 
         } else {
-            alert("MetaMask is not installed!");
+            console.error("MetaMask not found");
+            router.push("/verify-meta-mask-ajkl47813290-csadnl78913240");
         }
     };
 

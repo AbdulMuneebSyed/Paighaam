@@ -12,8 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useRouter } from "next/navigation"; // Importing useRouter
-import { supabase } from "@/lib/supabase"; // Import Supabase client
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
 const languages = [
   "English",
@@ -49,9 +49,8 @@ export default function ProfileSetup() {
   const [photo, setPhoto] = useState<File | null>(null);
   const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
   const [wallet, setWallet] = useState<string | null>(null);
-  const router = useRouter(); // Using useRouter
+  const router = useRouter();
 
-  // Fetch localStorage data on client-side
   useEffect(() => {
     if (typeof window !== "undefined") {
       setPhoneNumber(localStorage.getItem("phone_number"));
@@ -61,12 +60,10 @@ export default function ProfileSetup() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!phoneNumber) {
       alert("Phone number is missing in localStorage!");
       return;
     }
-
     let photoUrl = "";
     if (photo) {
       const { data, error: uploadError } = await supabase.storage
@@ -92,35 +89,24 @@ export default function ProfileSetup() {
 
     if (error) {
       alert("Error setting up profile: " + error.message);
-      console.error(error);
       return;
     }
-
     const userId = userData?.[0]?.id;
     if (userId) {
       localStorage.setItem("user_id", userId);
     }
-    console.log(userId);
     router.push("/dashboard/chats");
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="flex min-h-screen items-center justify-center bg-gradient-to-r from-green-400 to-blue-500"
-    >
-      <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-lg">
-        <h1 className="mb-6 text-center text-2xl font-bold text-gray-800">
-          Set Up Your Paighaam Profile
+    <motion.div className="flex min-h-screen items-center justify-center bg-gradient-to-r from-gray-900 to-black text-white p-6">
+      <motion.div className="w-full max-w-md bg-gray-100 p-8 rounded-xl shadow-xl">
+        <h1 className="text-2xl font-bold text-black text-center mb-6">
+          Profile Setup
         </h1>
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <Label
-              htmlFor="name"
-              className="mb-2 block text-sm font-medium text-gray-700"
-            >
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="name" className="text-black">
               Your Name
             </Label>
             <Input
@@ -129,35 +115,33 @@ export default function ProfileSetup() {
               placeholder="Enter your name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full"
+              className="w-full bg-white text-black border-gray-400 focus:border-black"
               required
             />
           </div>
-          <div className="mb-4">
-            <Label
-              htmlFor="language"
-              className="mb-2 block text-sm font-medium text-gray-700"
-            >
+          <div>
+            <Label htmlFor="language" className="text-black">
               Preferred Language
             </Label>
             <Select onValueChange={setLanguage} required>
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full bg-white text-black border-gray-400 focus:border-black">
                 <SelectValue placeholder="Select a language" />
               </SelectTrigger>
-              <SelectContent className="h-48 bg-white rounded-lg shadow-lg overflow-y-auto">
+              <SelectContent className="bg-white h-36 text-black rounded-lg shadow-lg overflow-y-auto">
                 {languages.map((lang) => (
-                  <SelectItem key={lang} value={lang}>
+                  <SelectItem
+                    key={lang}
+                    value={lang}
+                    className="hover:bg-gray-300"
+                  >
                     {lang}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-          <div className="mb-4">
-            <Label
-              htmlFor="photo"
-              className="mb-2 block text-sm font-medium text-gray-700"
-            >
+          <div>
+            <Label htmlFor="photo" className="text-black">
               Profile Photo
             </Label>
             <Input
@@ -165,20 +149,20 @@ export default function ProfileSetup() {
               id="photo"
               accept="image/*"
               onChange={(e) => setPhoto(e.target.files?.[0] || null)}
-              className="w-full"
+              className="w-full bg-white text-black border-gray-400 focus:border-black"
             />
           </div>
-          <Label
-            htmlFor="wallet"
-            className="mb-2 block text-sm font-medium text-gray-700"
-          >
+          <Label htmlFor="wallet" className="text-gray-700">
             Your Wallet: {wallet || "Not Available"}
           </Label>
-          <Button type="submit" className="w-full">
+          <Button
+            type="submit"
+            className="w-full bg-black text-white font-semibold py-2 rounded-lg hover:bg-gray-800"
+          >
             Complete Profile
           </Button>
         </form>
-      </div>
+      </motion.div>
     </motion.div>
   );
 }

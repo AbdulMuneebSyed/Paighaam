@@ -3,6 +3,7 @@
 import useMetaMask from "@/components/hooks/metamask";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { motion } from "framer-motion";
 
 export default function MetaMaskVerificationPage() {
   const router = useRouter();
@@ -15,7 +16,9 @@ export default function MetaMaskVerificationPage() {
   }, [verified, router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+    <div
+      className="flex min-h-screen items-center justify-center bg-gradient-to-tr from-gray-900 to-black"
+    >
       <div className="bg-white shadow-lg rounded-lg p-8 max-w-md w-full">
         <div className="flex flex-col items-center">
           {/* MetaMask Logo */}
