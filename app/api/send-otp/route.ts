@@ -12,9 +12,7 @@ export async function POST(request: Request) {
       receiver_language,
     } = await request.json();
 
-    const client = new GoogleGenerativeAI(
-      "AIzaSyDZWZijo60xAMZOiU4Zs-2M0uWGaX9Sdcs"
-    );
+    const client = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
     const prompt = `response should be straight forward, act like a translator :Translate the following text from ${sender_language} to ${receiver_language} , dont give me anything extra, you should translate it into native language and as it is and no roman english:\n\n${message}`;
     const model = client.getGenerativeModel({ model: "gemini-2.0-flash" });
